@@ -1,36 +1,28 @@
 package org.openpixi.proto.math;
 
-public class SU2AlgebraElement implements AlgebraElement {
+public class SU2AlgebraElement {
 
 	protected double v0, v1, v2;
 	
 	public SU2AlgebraElement() {
-			
 		v0 = 0;
 		v1 = 0;
 		v2 = 0;
-			
 	}
 	
 	public SU2AlgebraElement(double a, double b, double c) {
-		
 		v0 = a;
 		v1 = b;
 		v2 = c;
-		
 	}
 	
 	public void reset () {
-		
 		v0 = 0;
 		v1 = 0;
 		v2 = 0;
-		
 	}
 	
-	public AlgebraElement add (AlgebraElement arg) {
-
-		SU2AlgebraElement a = (SU2AlgebraElement) arg;
+	public SU2AlgebraElement add (SU2AlgebraElement a) {
 		SU2AlgebraElement b = new SU2AlgebraElement();
 
 		b.v0 = v0+a.v0;
@@ -40,20 +32,13 @@ public class SU2AlgebraElement implements AlgebraElement {
 		
 	}
 	
-	public void addAssign(AlgebraElement arg) {
-
-		SU2AlgebraElement a = (SU2AlgebraElement) arg;
-
+	public void addAssign(SU2AlgebraElement a) {
 		v0 += a.v0;
 		v1 += a.v1;
 		v2 += a.v2;
-		
 	}
 	
-	public AlgebraElement sub (AlgebraElement arg) {
-
-		SU2AlgebraElement a = (SU2AlgebraElement) arg;
-		
+	public SU2AlgebraElement sub (SU2AlgebraElement a) {
 		SU2AlgebraElement b = new SU2AlgebraElement();
 		b.v0 = v0-a.v0;
 		b.v1 = v1-a.v1;
@@ -97,7 +82,7 @@ public class SU2AlgebraElement implements AlgebraElement {
 		
 	}
 	
-	public AlgebraElement mult (double number) {
+	public SU2AlgebraElement mult (double number) {
 		
 		SU2AlgebraElement b = new SU2AlgebraElement();
 		b.v0 = v0*number;
@@ -115,29 +100,23 @@ public class SU2AlgebraElement implements AlgebraElement {
 
 	}
 
-	public double mult (AlgebraElement arg) {
-		SU2AlgebraElement a = (SU2AlgebraElement) arg;
+	public double mult (SU2AlgebraElement a) {
 		return v0*a.v0+v1*a.v1+v2*a.v2;
 	}
 
-	public void set (AlgebraElement arg) {
-
-		SU2AlgebraElement a = (SU2AlgebraElement) arg;
-		
+	public void set (SU2AlgebraElement a) {
 		v0 = a.v0;
 		v1 = a.v1;
 		v2 = a.v2;
-		
 	}
 	
-	public GroupElement getLinearizedLink() {
-		
+	public SU2GroupElement getLinearizedLink() {
 		double sum = (v0*v0+v1*v1+v2*v2)/4;
 		SU2GroupElement b = new SU2GroupElement(Math.sqrt(1.0 - sum), v0/2, v1/2, v2/2);
 		return b;
 	}
 	
-	public GroupElement getLink() {
+	public SU2GroupElement getLink() {
 		
 		double sum = v0*v0+v1*v1+v2*v2;
 		double mod = Math.sqrt(sum)/2;
@@ -156,9 +135,7 @@ public class SU2AlgebraElement implements AlgebraElement {
 		return 0.5 * get(c);
 	}
 
-	public AlgebraElement act(GroupElement g) {
-
-		SU2GroupElement u = (SU2GroupElement) g;
+	public SU2AlgebraElement act(SU2GroupElement u) {
 		SU2GroupElement Xm = new SU2GroupElement();
 
 		Xm.set(0, 0.0);
@@ -166,16 +143,16 @@ public class SU2AlgebraElement implements AlgebraElement {
 		Xm.set(2, v1 / 2);
 		Xm.set(3, v2 / 2);
 
-		Xm = (SU2GroupElement) u.mult(Xm.mult(u.adj()));
+		Xm = u.mult(Xm.mult(u.adj()));
 		return Xm.proj();
 
 	}
 
-	public void actAssign(GroupElement g) {
+	public void actAssign(SU2GroupElement g) {
 		this.set(this.act(g));
 	}
 
-	public AlgebraElement copy() {
+	public SU2AlgebraElement copy() {
 		return new SU2AlgebraElement(v0, v1, v2);
 	}
 
