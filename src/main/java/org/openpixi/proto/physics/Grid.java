@@ -2,6 +2,11 @@ package org.openpixi.proto.physics;
 
 import org.openpixi.proto.math.SU2AlgebraElement;
 import org.openpixi.proto.math.SU2GroupElement;
+import org.openpixi.proto.util.Logger;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Grid {
     public int totalNumberOfCells;
@@ -10,6 +15,7 @@ public class Grid {
     public int acummulatedCellCount[];
     public double[] a;
     public double dt;
+    public int numberOfThreads = 4;
 
     public Grid(int[] numCells) {
         this.numCells = numCells;
@@ -89,11 +95,32 @@ public class Grid {
     }
 
     public void evolve() {
-        SU2AlgebraElement E;
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            final int c = i;
+            final int length = totalNumberOfCells / numberOfThreads;
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    int i0 = c * length;
+                    int i1 = (c+1) * length;
+                    evolve_partial(i0, i1);
+                }
+            });
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Logger.log("Well.. something went wrong!");
+        }
+    }
+
+    public void evolve_partial(int i0, int i1) {
         SU2GroupElement tempGroup = new SU2GroupElement();
-        for (int i = 0; i < totalNumberOfCells; i++) {
+        for (int i = i0; i < i1; i++) {
             for (int d = 0; d < 3; d++) {
-                E = cells[i].E[d];
+                SU2AlgebraElement E = cells[i].E[d];
 
                 // Rot B
                 tempGroup.set(cells[i].U0[d]);
@@ -112,7 +139,28 @@ public class Grid {
     }
 
     public void switchU() {
-        for (int index = 0; index < totalNumberOfCells; index++) {
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            final int c = i;
+            final int length = totalNumberOfCells / numberOfThreads;
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    int i0 = c * length;
+                    int i1 = (c+1) * length;
+                    switchU_partial(i0, i1);
+                }
+            });
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Logger.log("Well.. something went wrong!");
+        }
+    }
+    public void switchU_partial(int i0, int i1) {
+        for (int index = i0; index < i1; index++) {
             cells[index].switchU();
         }
     }

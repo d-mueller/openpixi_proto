@@ -1,4 +1,4 @@
-package org.openpixi.proto.ui;
+package org.openpixi.proto;
 
 import org.openpixi.proto.physics.Simulation;
 

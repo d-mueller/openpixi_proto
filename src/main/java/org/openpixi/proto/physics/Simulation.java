@@ -5,12 +5,13 @@ import org.openpixi.proto.observables.ProjectedEnergyDensity;
 import org.openpixi.proto.util.Logger;
 import org.openpixi.proto.util.MemoryInfo;
 import org.openpixi.proto.util.PerformanceTimer;
-import sun.rmi.runtime.Log;
 
 public class Simulation {
     public int NL, NT;
     public double aL, aT, dt;
     public int iterations;
+    public int observablesSteps;
+    public int numberOfThreads;
 
     public Grid grid;
 
@@ -20,16 +21,18 @@ public class Simulation {
         // Configuration
         NL = 512;
         NT = 1;
-        aL = 0.1;
+        aL = 0.5;
         aT = 1.0;
         dt = aL / 4.0;
-        iterations = 100000;
+        iterations = 10000;
+        observablesSteps = 10;
+        numberOfThreads = 1;
 
 
         timer = new PerformanceTimer();
         timer.active = true;
 
-        Logger.activated = false;
+        Logger.activated = true;
     }
 
     public void initialize() {
@@ -42,13 +45,17 @@ public class Simulation {
         grid = new Grid(numCells);
         grid.a = new double[] {aL, aT, aT};
         grid.dt   = dt;
+        grid.numberOfThreads = numberOfThreads;
         timer.lap("Init      ");
 
         MemoryInfo.writeInfo();
 
         timer.reset();
         // Initial conditions
-        Pulse pulse = new Pulse(NL / 2, 1, 16.0 * aL, 1.0);
+        Pulse pulse;
+        pulse = new Pulse((int) (NL * 0.25), 1, 4 * aL, 1.0, 0.0, 0.0);
+        pulse.initializeFields(this);
+        pulse = new Pulse((int) (NL * 0.75), -1, 4 * aL, 0.0, 1.0, 0.0);
         pulse.initializeFields(this);
         timer.lap("Initial C ");
 
@@ -56,12 +63,12 @@ public class Simulation {
     }
 
     public void run() {
-        ProjectedEnergyDensity diagnostic = new ProjectedEnergyDensity("pe1.dat", NL * aL);
+        ProjectedEnergyDensity diagnostic = new ProjectedEnergyDensity("pe1.dat", observablesSteps * dt);
         diagnostic.initialize(this);
 
         // Simulation loop
         for (int step = 0; step < iterations; step++) {
-            Logger.log("SIM STEP   "+(step+1)+"/"+iterations);
+            Logger.log("SIM STEP   "+(step)+"/"+iterations);
 
 
             // Switch U0 and U1
@@ -76,7 +83,7 @@ public class Simulation {
 
 
             // Compute observables
-            if(step % (aL / dt * NL) == 0) {
+            if(step % observablesSteps == 0) {
                 timer.reset();
                 diagnostic.evaluate(grid);
                 timer.lap("Observe 1 ");
@@ -84,7 +91,6 @@ public class Simulation {
                 timer.lap("Observe 2 ");
 
                 MemoryInfo.writeInfo();
-                Logger.logIgnore(step +" / " + iterations);
             }
         }
     }
